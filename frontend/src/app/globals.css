@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground: 17 24 39;
+  --background: 250 250 252;
+}
+
+html {
+  font-size: 16px;
+}
+
+html[data-ui-mode="senior"] {
+  font-size: 18px;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  color: rgb(var(--foreground));
+  background: rgb(var(--background));
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* { box-sizing: border-box; }
+
+/* 适老化可读性增强：弱化浅灰文本、提升焦点可见性 */
+.text-gray-500 { color: rgb(75 85 99) !important; }
+.text-gray-400 { color: rgb(107 114 128) !important; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(230, 0, 54, 0.25);
+  outline-offset: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 3px;
+}
