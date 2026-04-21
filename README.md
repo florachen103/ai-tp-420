@@ -151,7 +151,7 @@ npm run dev
 # DeepSeek（默认，性价比最高）
 AI_PROVIDER=deepseek
 AI_MODEL_CHAT=deepseek-chat
-DEEPSEEK_API_KEY=sk-506821f7bc7948b3886ccbf54fd996b6
+DEEPSEEK_API_KEY=sk-xxx
 DASHSCOPE_API_KEY=sk-xxx        # Embedding 走通义，DeepSeek 没有 embedding
 
 # 通义千问（全家桶）
