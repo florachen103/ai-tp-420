@@ -9,6 +9,20 @@ from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _normalize_postgres_dsn_for_psycopg3(url: str) -> str:
+    """Render 等托管商常给 postgres:// 或 postgresql://，SQLAlchemy+psycopg3 需 postgresql+psycopg://。"""
+    u = url.strip()
+    if not u:
+        return u
+    if u.startswith("postgresql+psycopg://"):
+        return u
+    if u.startswith("postgres://"):
+        return "postgresql+psycopg://" + u[len("postgres://") :]
+    if u.startswith("postgresql://"):
+        return "postgresql+psycopg://" + u[len("postgresql://") :]
+    return u
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -24,6 +38,9 @@ class Settings(BaseSettings):
 
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 天
+
+    # Render 关联 Postgres 时通常只注入 DATABASE_URL；未设置时再用下面分项拼连接串
+    DATABASE_URL: str | None = None
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
@@ -78,6 +95,9 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[misc]
     @property
     def database_url(self) -> str:
+        raw = (self.DATABASE_URL or "").strip()
+        if raw:
+            return _normalize_postgres_dsn_for_psycopg3(raw)
         return (
             f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

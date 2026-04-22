@@ -123,6 +123,12 @@ npm run dev
 
 本地可参考 `frontend/.env.example` 复制为 `frontend/.env.local`。
 
+### Render 后端：登录 500 / `Internal Server Error`
+
+1. **数据库连接**：在 Render 打开 **PostgreSQL（如 ai-tp-420-db）**，复制 **Internal Database URL**，加到 **Web Service（ai-tp-420-backend）→ Environment** 中的 **`DATABASE_URL`**（若已自动注入可省略）。后端代码会**优先使用 `DATABASE_URL`**，并自动改为 `postgresql+psycopg://` 以匹配当前 SQLAlchemy 驱动。  
+2. **迁移**：首次部署需在容器/启动命令中执行 **`alembic upgrade head`**（或等价迁移），否则没有 `users` 表等也会报错。  
+3. 仍失败时看 **ai-tp-420-backend → Logs** 里的 Python Traceback。
+
 ---
 
 ## 关键目录
