@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,7 @@ function TreeList({
   );
 }
 
-export default function KnowledgeWikiTreePage() {
+function KnowledgeWikiTreeContent() {
   const params = useSearchParams();
   const preset = params.get("space_id");
   const [spaces, setSpaces] = useState<KnowledgeSpace[]>([]);
@@ -158,5 +158,17 @@ export default function KnowledgeWikiTreePage() {
         </CardBody>
       </Card>
     </div>
+  );
+}
+
+export default function KnowledgeWikiTreePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl p-4 text-sm text-gray-500 md:p-8">加载中…</div>
+      }
+    >
+      <KnowledgeWikiTreeContent />
+    </Suspense>
   );
 }

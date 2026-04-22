@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardBody } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { api, ApiError } from "@/lib/api";
 import type { KnowledgeDocument } from "@/types/api";
 
-export default function KnowledgeDraftsPage() {
+function KnowledgeDraftsContent() {
   const params = useSearchParams();
   const presetSpaceId = params.get("space_id");
   const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
@@ -113,5 +113,17 @@ export default function KnowledgeDraftsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function KnowledgeDraftsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl p-4 text-sm text-gray-500 md:p-8">加载中…</div>
+      }
+    >
+      <KnowledgeDraftsContent />
+    </Suspense>
   );
 }
