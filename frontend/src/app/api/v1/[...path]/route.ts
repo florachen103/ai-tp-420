@@ -67,16 +67,13 @@ async function proxy(req: NextRequest, segments: string[]) {
   const outHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
     const k = key.toLowerCase();
-    if (k === "content-encoding" || k === "transfer-encoding") return;
+    if (k === "content-encoding" || k === "transfer-encoding" || k === "content-length") return;
     outHeaders.set(key, value);
   });
 
-  try {
-    return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ detail: "转发响应失败", error: msg }, { status: 500 });
-  }
+  /** 缓冲响应，避免在 Vercel 上 pipe ReadableStream 偶发失败导致 500 */
+  const buf = await upstream.arrayBuffer();
+  return new NextResponse(buf, { status: upstream.status, headers: outHeaders });
 }
 
 type Ctx = { params: { path?: string[] | string } };
