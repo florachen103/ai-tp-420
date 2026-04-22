@@ -1,33 +1,35 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-/** 运行时读环境变量，避免依赖 external rewrite 转发 POST（Vercel 上易 500） */
+/** 运行时读环境变量，转发到 Render 等后端 */
 export const dynamic = "force-dynamic";
-
-const HOP_BY_HOP = new Set([
-  "connection",
-  "content-length",
-  "host",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailers",
-  "transfer-encoding",
-  "upgrade",
-]);
+export const runtime = "nodejs";
 
 function backendBase(): string {
   return (process.env.BACKEND_ORIGIN || "").trim().replace(/\/$/, "");
 }
 
+/** 只转发常见 API 头，避免把浏览器/Vercel 的一堆 hop 头带给上游导致异常 */
 function forwardHeaders(req: NextRequest): Headers {
   const out = new Headers();
-  req.headers.forEach((value, key) => {
-    if (HOP_BY_HOP.has(key.toLowerCase())) return;
-    out.set(key, value);
-  });
+  const names = [
+    "authorization",
+    "content-type",
+    "accept",
+    "accept-language",
+    "if-match",
+    "if-none-match",
+  ] as const;
+  for (const name of names) {
+    const v = req.headers.get(name);
+    if (v) out.set(name, v);
+  }
   return out;
+}
+
+function normalizeSegments(path: string[] | string | undefined): string[] {
+  if (!path) return [];
+  return Array.isArray(path) ? path : [path];
 }
 
 async function proxy(req: NextRequest, segments: string[]) {
@@ -41,12 +43,26 @@ async function proxy(req: NextRequest, segments: string[]) {
 
   const method = req.method;
   const hasBody = method !== "GET" && method !== "HEAD";
-  const upstream = await fetch(url, {
-    method,
-    headers: forwardHeaders(req),
-    body: hasBody ? await req.arrayBuffer() : undefined,
-    redirect: "manual",
-  });
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(url, {
+      method,
+      headers: forwardHeaders(req),
+      body: hasBody ? await req.arrayBuffer() : undefined,
+      redirect: "manual",
+      cache: "no-store",
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json(
+      {
+        detail: "无法连接后端，请检查 BACKEND_ORIGIN 与 Render 服务是否可用",
+        error: msg,
+      },
+      { status: 502 }
+    );
+  }
 
   const outHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
@@ -55,26 +71,31 @@ async function proxy(req: NextRequest, segments: string[]) {
     outHeaders.set(key, value);
   });
 
-  return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
+  try {
+    return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ detail: "转发响应失败", error: msg }, { status: 500 });
+  }
 }
 
-type Ctx = { params: { path: string[] } };
+type Ctx = { params: { path?: string[] | string } };
 
 export async function GET(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }
 export async function POST(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }
 export async function PUT(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }
 export async function DELETE(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }
 export async function OPTIONS(req: NextRequest, ctx: Ctx) {
-  return proxy(req, ctx.params.path ?? []);
+  return proxy(req, normalizeSegments(ctx.params?.path));
 }

@@ -109,6 +109,8 @@ npm run dev
 
 若你曾配置 **`NEXT_PUBLIC_API_BASE_URL`** 且填错或未 Redeploy，可**删除**该变量，避免与方式 A 混用；保留也可以，代码会**优先**使用 `NEXT_PUBLIC_*` 直连。
 
+**登录仍 500 时**：在浏览器 **Network** 里点开 `login` → **Response**，看 JSON 是「无法连接后端」（本代理 `502`）还是 FastAPI 的 `detail`。Render **免费实例休眠**时，**首次**请求可能超过 **Vercel Hobby Serverless 默认约 10s**，会在 Vercel 侧超时并表现为 **500/504**。可先新开标签访问 `https://<你的后端>.onrender.com/healthz` **唤醒**后再登录；或改用上面的 **`NEXT_PUBLIC_API_BASE_URL` 直连**（由浏览器长等冷启动，不受 Vercel 函数时长限制）。
+
 ### 方式 B：`NEXT_PUBLIC_API_BASE_URL` 直连后端
 
 1. 新增 **`NEXT_PUBLIC_API_BASE_URL`** = `https://你的后端.onrender.com/api/v1`（完整前缀）。
