@@ -13,7 +13,7 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=6)
     name: str = Field(min_length=1, max_length=100)
     department: str | None = None
-    verification_code: str = Field(min_length=4, max_length=12)
+    verification_code: str | None = Field(default=None, min_length=4, max_length=12)
 
 
 class SendRegisterCodeRequest(BaseModel):

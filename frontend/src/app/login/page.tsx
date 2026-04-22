@@ -152,7 +152,6 @@ export default function LoginPage() {
                       <Input
                         value={form.verificationCode}
                         onChange={(e) => setForm({ ...form, verificationCode: e.target.value })}
-                        required
                         placeholder="请输入6位验证码"
                       />
                       <Button

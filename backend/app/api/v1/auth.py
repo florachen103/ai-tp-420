@@ -23,7 +23,7 @@ router = APIRouter()
 def register(payload: RegisterRequest, db: DbSession):
     email = payload.email.lower().strip()
     if is_register_verification_required() and not verify_register_code(
-        email, payload.verification_code
+        email, payload.verification_code or ""
     ):
         raise HTTPException(status_code=400, detail="验证码错误或已过期")
     if db.query(User).filter(User.email == email).first():
