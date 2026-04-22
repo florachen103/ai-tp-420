@@ -10,7 +10,11 @@ from app.schemas.auth import (
     TokenResponse,
     UserOut,
 )
-from app.services.auth_email import send_register_code, verify_register_code
+from app.services.auth_email import (
+    is_register_verification_required,
+    send_register_code,
+    verify_register_code,
+)
 
 router = APIRouter()
 
@@ -18,7 +22,9 @@ router = APIRouter()
 @router.post("/register", response_model=UserOut)
 def register(payload: RegisterRequest, db: DbSession):
     email = payload.email.lower().strip()
-    if not verify_register_code(email, payload.verification_code):
+    if is_register_verification_required() and not verify_register_code(
+        email, payload.verification_code
+    ):
         raise HTTPException(status_code=400, detail="验证码错误或已过期")
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="邮箱已注册")
@@ -55,6 +61,8 @@ def me(user: CurrentUser):
 
 @router.post("/send-register-code")
 def send_code(payload: SendRegisterCodeRequest):
+    if not is_register_verification_required():
+        return {"message": "当前环境未启用邮件验证码，可直接注册"}
     try:
         send_register_code(payload.email.lower().strip())
     except ValueError as e:

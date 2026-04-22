@@ -34,6 +34,11 @@ def _smtp_ready() -> bool:
     )
 
 
+def is_register_verification_required() -> bool:
+    """Whether registration must verify an emailed code in the current env."""
+    return _smtp_ready()
+
+
 def send_register_code(email: str) -> None:
     if not _smtp_ready():
         raise ValueError("邮件服务未配置")
