@@ -3,7 +3,7 @@
  *
  * 生产（Vercel）二选一：
  * - **BACKEND_ORIGIN**（推荐）：如 `https://xxx.onrender.com`（不要带 /api/v1）。前端走同源
- *   `/api/v1`，由 `src/middleware.ts` 转发到 Render；改变量后一般只需 Redeploy，不依赖构建进 bundle。
+ *   `/api/v1`，由 `next.config.js` 的 `rewrites` 转发到 Render；需在 Vercel 配置该变量并 **Redeploy**（写入构建期 rewrites）。
  * - **NEXT_PUBLIC_API_BASE_URL**：完整前缀如 `https://xxx.onrender.com/api/v1`，浏览器直连后端；
  *   修改后必须 Redeploy 才会进客户端 JS；后端需配置 CORS。
  */

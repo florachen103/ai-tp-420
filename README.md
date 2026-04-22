@@ -100,12 +100,12 @@ npm run dev
 
 若登录仍请求 **`http://localhost:8000`**，说明线上 bundle 里曾内联过默认地址；请改用下面 **方式 A** 或修正 **方式 B** 后 **Redeploy**。
 
-### 方式 A（推荐）：`BACKEND_ORIGIN` + Edge 转发
+### 方式 A（推荐）：`BACKEND_ORIGIN` + `next.config.js` rewrites
 
 1. Vercel → **Settings** → **Environment Variables** → 新增 **`BACKEND_ORIGIN`**，值为 **仅后端根地址**，**不要**带 `/api/v1`，例如：  
    `https://你的服务.onrender.com`
-2. 保存后 **Deployments → Redeploy**（让 `middleware` 读到新变量）。
-3. 前端在浏览器里请求 **`https://你的项目.vercel.app/api/v1/...`**（同源），由 **`frontend/src/middleware.ts`** 转发到 Render；**一般不必**再为浏览器配置直连后端的 CORS（若仍直连才需要 `APP_CORS_ORIGINS`）。
+2. 保存后 **Deployments → Redeploy**（`BACKEND_ORIGIN` 在 **`next build`** 时写入 rewrites，必须重新构建）。
+3. 浏览器请求 **`https://你的项目.vercel.app/api/v1/...`**（同源），由 **`frontend/next.config.js`** 的 `rewrites` 转发到 Render；**一般不必**再为浏览器配置直连后端的 CORS（若仍直连才需要 `APP_CORS_ORIGINS`）。
 
 若你曾配置 **`NEXT_PUBLIC_API_BASE_URL`** 且填错或未 Redeploy，可**删除**该变量，避免与方式 A 混用；保留也可以，代码会**优先**使用 `NEXT_PUBLIC_*` 直连。
 
@@ -117,7 +117,7 @@ npm run dev
 
 ### Favicon 404
 
-仓库已提供 **`frontend/public/favicon.svg`**，并由 **`middleware`**（及 `next.config` 的 rewrite）把 **`/favicon.ico`** 指到该 SVG；若线上仍 404，多半是**未部署最新代码**，请合并最新提交后再 Deploy。
+仓库已提供 **`frontend/public/favicon.svg`**，并由 **`next.config.js`** 的 rewrite 将 **`/favicon.ico`** 指到该 SVG；若线上仍 404，多半是**未部署最新代码**，请合并最新提交后再 Deploy。
 
 本地可参考 `frontend/.env.example` 复制为 `frontend/.env.local`。
 
