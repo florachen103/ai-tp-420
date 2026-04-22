@@ -1,10 +1,28 @@
 /**
  * 后端 API 客户端。所有请求统一经这里，便于处理鉴权、错误、类型。
+ *
+ * 生产（Vercel）二选一：
+ * - **BACKEND_ORIGIN**（推荐）：如 `https://xxx.onrender.com`（不要带 /api/v1）。前端走同源
+ *   `/api/v1`，由 `src/middleware.ts` 转发到 Render；改变量后一般只需 Redeploy，不依赖构建进 bundle。
+ * - **NEXT_PUBLIC_API_BASE_URL**：完整前缀如 `https://xxx.onrender.com/api/v1`，浏览器直连后端；
+ *   修改后必须 Redeploy 才会进客户端 JS；后端需配置 CORS。
  */
+function getApiBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
 
-const BASE =
-  (globalThis as { process?: { env?: Record<string, string | undefined> } })
-    .process?.env?.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+  if (typeof window !== "undefined") {
+    const h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1") {
+      return "http://localhost:8000/api/v1";
+    }
+    return `${window.location.origin}/api/v1`;
+  }
+
+  const vercel = process.env.VERCEL_URL?.replace(/^https?:\/\//, "");
+  if (vercel) return `https://${vercel}/api/v1`;
+  return "http://localhost:8000/api/v1";
+}
 
 export class ApiError extends Error {
   status: number;
@@ -45,7 +63,7 @@ async function request<T>(
     body = opts.form;
   }
 
-  const res = await fetch(`${BASE}${path}`, {
+  const res = await fetch(`${getApiBase()}${path}`, {
     ...opts,
     headers,
     body,
@@ -109,7 +127,7 @@ export const api = {
   upload: <T>(path: string, file: File, onProgress?: (percent: number) => void): Promise<T> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${BASE}${path}`);
+      xhr.open("POST", `${getApiBase()}${path}`);
       const token = getToken();
       if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 

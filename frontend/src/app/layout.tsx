@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "智能培训平台",
   description: "基于知识库检索的企业在线培训系统",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
+  },
 };
 
 export const viewport: Viewport = {
