@@ -23,7 +23,6 @@ def register(payload: RegisterRequest, db: DbSession):
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="邮箱已注册")
 
-    # MVP：第一个注册的自动成为管理员，方便启动
     is_first = db.query(User).count() == 0
     user = User(
         email=email,

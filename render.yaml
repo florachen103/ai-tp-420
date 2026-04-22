@@ -1,0 +1,161 @@
+services:
+  - name: ai-tp-420-backend
+    type: web
+    runtime: docker
+    plan: starter
+    region: singapore
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: sh -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}'
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_SECRET_KEY
+        sync: false
+      - key: APP_CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-tp-420-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          name: ai-tp-420-redis
+          type: keyvalue
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: ai-tp-420-redis
+          type: keyvalue
+          property: port
+      - key: AI_PROVIDER
+        value: deepseek
+      - key: AI_MODEL_CHAT
+        value: deepseek-chat
+      - key: AI_MODEL_EMBEDDING
+        value: text-embedding-v2
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DASHSCOPE_API_KEY
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: S3_USE_SSL
+        value: "true"
+      - key: SMTP_ENABLED
+        value: "false"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_USE_SSL
+        value: "false"
+      - key: AUTH_REGISTER_CODE_TTL_MINUTES
+        value: "10"
+      - key: AUTH_REGISTER_CODE_RESEND_SECONDS
+        value: "60"
+
+  - name: ai-tp-420-worker
+    type: worker
+    runtime: docker
+    plan: starter
+    region: singapore
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-tp-420-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          name: ai-tp-420-redis
+          type: keyvalue
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: ai-tp-420-redis
+          type: keyvalue
+          property: port
+      - key: AI_PROVIDER
+        value: deepseek
+      - key: AI_MODEL_CHAT
+        value: deepseek-chat
+      - key: AI_MODEL_EMBEDDING
+        value: text-embedding-v2
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DASHSCOPE_API_KEY
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: S3_USE_SSL
+        value: "true"
+      - key: SMTP_ENABLED
+        value: "false"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_USE_SSL
+        value: "false"
+      - key: AUTH_REGISTER_CODE_TTL_MINUTES
+        value: "10"
+      - key: AUTH_REGISTER_CODE_RESEND_SECONDS
+        value: "60"
+
+  - name: ai-tp-420-redis
+    type: keyvalue
+    plan: free
+    region: singapore
+    ipAllowList: []
+
+databases:
+  - name: ai-tp-420-db
+    plan: free
+    region: singapore
+    postgresMajorVersion: "16"
+    databaseName: training
+    ipAllowList: []

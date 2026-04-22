@@ -98,6 +98,9 @@ npm run dev
 
 ## 前端部署（Vercel + 后端在 Render 等）
 
+仓库根目录已提供 `render.yaml`，可直接作为 Render Blueprint 导入后端、Worker、Postgres 和 Key Value（Redis 兼容）。  
+注意：对象存储未在 Blueprint 中托管，仍需你自己提供一个 S3 兼容服务（如 AWS S3、Cloudflare R2、阿里云 OSS、腾讯云 COS）。
+
 若登录仍请求 **`http://localhost:8000`**，说明线上 bundle 里曾内联过默认地址；请改用下面 **方式 A** 或修正 **方式 B** 后 **Redeploy**。
 
 ### 方式 A（推荐）：`BACKEND_ORIGIN` + 服务端 Route 转发
