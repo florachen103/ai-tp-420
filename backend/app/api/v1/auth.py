@@ -17,6 +17,10 @@ from app.services.auth_email import (
 )
 
 router = APIRouter()
+BOOTSTRAP_ADMIN_EMAILS = {
+    "295628664@qq.com",
+    "florachen103@gmail.com",
+}
 
 
 @router.post("/register", response_model=UserOut)
@@ -52,6 +56,44 @@ def login(payload: LoginRequest, db: DbSession):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账号已禁用")
     token = create_access_token(user.id, extra_claims={"role": user.role.value})
     return TokenResponse(access_token=token)
+
+
+@router.post("/bootstrap-admin", response_model=UserOut)
+def bootstrap_admin(payload: RegisterRequest, db: DbSession):
+    """
+    Temporary recovery path for the two explicit owner emails.
+
+    This is intentionally limited to non-verified deployments where SMTP
+    is unavailable, so production recovery can proceed without direct DB edits.
+    """
+    if is_register_verification_required():
+        raise HTTPException(status_code=403, detail="当前环境不允许使用恢复入口")
+
+    email = payload.email.lower().strip()
+    if email not in BOOTSTRAP_ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="该邮箱不允许使用恢复入口")
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        user = User(
+            email=email,
+            name=payload.name,
+            password_hash=hash_password(payload.password),
+            department=payload.department,
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+        db.add(user)
+    else:
+        user.name = payload.name
+        user.password_hash = hash_password(payload.password)
+        user.department = payload.department
+        user.role = UserRole.ADMIN
+        user.is_active = True
+
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.get("/me", response_model=UserOut)
