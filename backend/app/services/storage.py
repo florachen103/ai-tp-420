@@ -21,9 +21,9 @@ class Storage:
         self._use_local = False
 
         endpoint = (settings.S3_ENDPOINT or "").strip()
-        if not endpoint:
+        if not endpoint or self._has_placeholder_s3_config(endpoint):
             self._use_local = True
-            logger.warning("S3_ENDPOINT 未配置，回退到本地文件存储")
+            logger.warning("S3 未配置或仍为占位符，回退到本地文件存储")
             return
 
         try:
@@ -51,6 +51,15 @@ class Storage:
             self._use_local = True
             self.client = None
             logger.exception(f"S3 bucket 检查失败，回退到本地文件存储: {e}")
+
+    def _has_placeholder_s3_config(self, endpoint: str) -> bool:
+        values = [
+            endpoint,
+            settings.S3_ACCESS_KEY,
+            settings.S3_SECRET_KEY,
+            settings.S3_BUCKET,
+        ]
+        return any((v or "").strip().startswith("your-") for v in values)
 
     def _local_path(self, key: str) -> Path:
         return self.local_root / self.bucket / Path(key)
