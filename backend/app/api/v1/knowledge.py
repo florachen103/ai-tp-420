@@ -128,6 +128,13 @@ def list_spaces(
     q = db.query(KnowledgeSpace)
     if status:
         q = q.filter(KnowledgeSpace.status == status)
+    if user.role == UserRole.LEARNER:
+        q = q.filter(KnowledgeSpace.status == KnowledgeSpaceStatus.ACTIVE)
+        q = q.filter(
+            KnowledgeSpace.documents.any(
+                KnowledgeDocument.status == KnowledgeDocumentStatus.PUBLISHED
+            )
+        )
     return q.order_by(KnowledgeSpace.name).all()
 
 
