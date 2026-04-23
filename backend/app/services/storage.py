@@ -53,8 +53,9 @@ class Storage:
             logger.exception(f"S3 bucket 检查失败，回退到本地文件存储: {e}")
 
     def _has_placeholder_s3_config(self, endpoint: str) -> bool:
+        normalized_endpoint = endpoint.replace("https://", "").replace("http://", "")
         values = [
-            endpoint,
+            normalized_endpoint,
             settings.S3_ACCESS_KEY,
             settings.S3_SECRET_KEY,
             settings.S3_BUCKET,
